@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Dry_cleaning_program.Controllers
 {
@@ -27,6 +28,7 @@ namespace Dry_cleaning_program.Controllers
 
         private DBController dbController;
 
+
         /// <summary>
         /// Конструктор без параметров, инициализирующий кэш клиентов и экземпляр БД контроллера.
         /// </summary>
@@ -34,6 +36,7 @@ namespace Dry_cleaning_program.Controllers
         {
             dbController = DBController.GetInstantce();
             clientsCache = dbController.GetAllClientsData();
+            
         }
 
         /// <summary>
@@ -68,6 +71,15 @@ namespace Dry_cleaning_program.Controllers
 
             dbController.Save(client);
             clientsCache.Add(client);
+        }
+
+        /// <summary>
+        /// Сериализация клиентов. Список клиентов берется из кэша контроллера.
+        /// </summary>
+        public void SerializeClients()
+        {
+            Serializer serializer = Serializer.GetInstnce();
+            serializer.Serialize(clientsCache);
         }
     }
 }

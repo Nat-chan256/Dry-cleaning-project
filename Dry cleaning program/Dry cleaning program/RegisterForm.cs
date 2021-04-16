@@ -366,11 +366,15 @@ namespace Dry_cleaning_program
         }
 
 
-
+        // Закрытие соединения с БД и сериализация данных
         private void RegisterForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             DBController dbController = DBController.GetInstantce();
             dbController.CloseConnection();
+
+            ClientController.SerializeClients();
+            OrdrsController.SerializeOrders();
+            ServiceController.SerializeServices();
         }
     }
 }

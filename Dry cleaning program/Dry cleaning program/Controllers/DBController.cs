@@ -13,15 +13,19 @@ namespace Dry_cleaning_program.Controllers
     {
         private MySqlConnection connection;
         private static DBController instance;
+        private Serializer serializer;
 
         
         private DBController()
         {
+            serializer = Serializer.GetInstnce();
+
             OpenConnection();
             CreateDatabase();
             CreateTables();
 
             instance = this;
+
         }
 
 
@@ -37,30 +41,37 @@ namespace Dry_cleaning_program.Controllers
 
             string query = "SELECT * FROM `Clients`;";
 
-            MySqlCommand command = new MySqlCommand(query, connection);
-
-            MySqlDataReader reader = command.ExecuteReader();
-
-            //Перебираем записи в reader
-            while (reader.Read())
+            try
             {
-                //datesReader.Read();
-                try
-                {
-                    result.Add(new ClientModel(reader[1].ToString(), /*surname*/
-                        reader[2].ToString(), /*name*/
-                        reader[3].ToString(), /*patronymic*/
-                        reader[0].ToString(), /*phone number*/
-                        DateTime.Parse(reader[4].ToString()), /*birthDate*/
-                        int.Parse(reader[5].ToString())/*orders number*/));
-                }
-                catch (IndexOutOfRangeException ex)
-                {
-                    continue;
-                }
-            }
+                MySqlCommand command = new MySqlCommand(query, connection);
 
-            reader.Close();
+                MySqlDataReader reader = command.ExecuteReader();
+
+                //Перебираем записи в reader
+                while (reader.Read())
+                {
+                    //datesReader.Read();
+                    try
+                    {
+                        result.Add(new ClientModel(reader[1].ToString(), /*surname*/
+                            reader[2].ToString(), /*name*/
+                            reader[3].ToString(), /*patronymic*/
+                            reader[0].ToString(), /*phone number*/
+                            DateTime.Parse(reader[4].ToString()), /*birthDate*/
+                            int.Parse(reader[5].ToString())/*orders number*/));
+                    }
+                    catch (IndexOutOfRangeException ex)
+                    {
+                        continue;
+                    }
+                }
+
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+                result = serializer.DeserializeClients();
+            }
 
             return result;
         }
@@ -76,40 +87,92 @@ namespace Dry_cleaning_program.Controllers
 
             string query = "SELECT * FROM Orders WHERE ReturnDate IS NULL";
 
-            //string query = "SELECT * FROM Orders";
 
-            MySqlCommand command = new MySqlCommand(query, connection);
-
-            MySqlDataReader reader = command.ExecuteReader();
-
-            //Отдельный запрос для дат
-            //string datesQuery = "SELECT FORMAT(ReceptionDate, 'yyyy/mm/dd') FROM Orders";
-
-            //MySqlCommand selectDatesCommand = new MySqlCommand(datesQuery, connection);
-
-            //MySqlDataReader datesReader = selectDatesCommand.ExecuteReader();
-
-
-            //Перебираем записи в reader
-            while (reader.Read())
+            try
             {
-                //datesReader.Read();
-                try
+                MySqlCommand command = new MySqlCommand(query, connection);
+
+                MySqlDataReader reader = command.ExecuteReader();
+
+                //Перебираем записи в reader
+                while (reader.Read())
                 {
-                    result.Add(new OrderModel((int)reader[0], /*id*/
-                        reader[1].ToString(), /*clientPhoneNumber*/
-                        reader[2].ToString(), /*serviceName*/
-                        int.Parse(reader[3].ToString()), /*stuffsNumber*/
-                        DateTime.Parse(reader[4].ToString()), /*receptionDate*/
-                        bool.Parse(reader[6].ToString())));
+                    try
+                    {
+                        result.Add(new OrderModel((int)reader[0], /*id*/
+                            reader[1].ToString(), /*clientPhoneNumber*/
+                            reader[2].ToString(), /*serviceName*/
+                            int.Parse(reader[3].ToString()), /*stuffsNumber*/
+                            DateTime.Parse(reader[4].ToString()), /*receptionDate*/
+                            bool.Parse(reader[6].ToString())));
+                    }
+                    catch (IndexOutOfRangeException ex)
+                    {
+                        continue;
+                    }
                 }
-                catch (IndexOutOfRangeException ex)
+
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+                result = serializer.DeserializeOrders();
+                List<OrderModel> ordersToRemove = new List<OrderModel>();
+                foreach (OrderModel order in result)
                 {
-                    continue;
+                    if (order.ReceptionDate != null)
+                    {
+                        ordersToRemove.Add(order);
+                    }
+                }
+
+                foreach (OrderModel order in ordersToRemove)
+                {
+                    result.Remove(order);
                 }
             }
 
-            reader.Close();
+            return result;
+        }
+
+        // Получение списка всех заказов.
+        public List<OrderModel> GetAllOrdersData()
+        {
+            List<OrderModel> result = new List<OrderModel>();
+
+            string query = "SELECT * FROM Orders;";
+
+
+            try
+            {
+                MySqlCommand command = new MySqlCommand(query, connection);
+
+                MySqlDataReader reader = command.ExecuteReader();
+
+                //Перебираем записи в reader
+                while (reader.Read())
+                {
+                    try
+                    {
+                        result.Add(new OrderModel((int)reader[0], /*id*/
+                            reader[1].ToString(), /*clientPhoneNumber*/
+                            reader[2].ToString(), /*serviceName*/
+                            int.Parse(reader[3].ToString()), /*stuffsNumber*/
+                            DateTime.Parse(reader[4].ToString()), /*receptionDate*/
+                            bool.Parse(reader[6].ToString())));
+                    }
+                    catch (IndexOutOfRangeException ex)
+                    {
+                        continue;
+                    }
+                }
+
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+                result = serializer.DeserializeOrders();
+            }
 
             return result;
         }
@@ -124,26 +187,33 @@ namespace Dry_cleaning_program.Controllers
 
             string query = "SELECT * FROM `Services`;";
 
-            MySqlCommand command = new MySqlCommand(query, connection);
-
-            MySqlDataReader reader = command.ExecuteReader();
-
-            //Перебираем записи в reader
-            while (reader.Read())
+            try
             {
-                try
-                {
-                    result.Add(new ServiceModel(reader[0].ToString(), /*service name*/
-                        int.Parse(reader[1].ToString()) /*cost*/
-                        ));
-                }
-                catch (IndexOutOfRangeException ex)
-                {
-                    continue;
-                }
-            }
+                MySqlCommand command = new MySqlCommand(query, connection);
 
-            reader.Close();
+                MySqlDataReader reader = command.ExecuteReader();
+
+                //Перебираем записи в reader
+                while (reader.Read())
+                {
+                    try
+                    {
+                        result.Add(new ServiceModel(reader[0].ToString(), /*service name*/
+                            int.Parse(reader[1].ToString()) /*cost*/
+                            ));
+                    }
+                    catch (IndexOutOfRangeException ex)
+                    {
+                        continue;
+                    }
+                }
+
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+                result = serializer.DeserializeServices();
+            }
 
             return result;
         }
@@ -174,10 +244,26 @@ namespace Dry_cleaning_program.Controllers
         {
             string query = $"UPDATE `Orders` SET ReturnDate = '{returnDate.ToString("dd/MM/yyyy")}' WHERE Id = {orderId};";
 
-            MySqlCommand command = new MySqlCommand(query, connection);
-            command.CommandTimeout = 60;
+            try
+            {
+                MySqlCommand command = new MySqlCommand(query, connection);
+                command.CommandTimeout = 60;
 
-            command.ExecuteNonQuery();
+                command.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                List<OrderModel> currentOrdersList = GetAllCurrentOrdersData();
+                foreach (OrderModel order in currentOrdersList)
+                {
+                    if (order.Id == orderId)
+                    {
+                        order.ReturnDate = returnDate;
+                        break;
+                    }
+                }
+                serializer.Serialize(currentOrdersList);
+            }
         }
 
 
@@ -186,7 +272,14 @@ namespace Dry_cleaning_program.Controllers
         /// </summary>
         public void CloseConnection()
         {
-            connection.Close();
+            try
+            {
+                connection.Close();
+            }
+            catch (Exception ex)
+            {
+                return;
+            }
         }
 
 
@@ -270,16 +363,39 @@ namespace Dry_cleaning_program.Controllers
         {
             string query = $"UPDATE `Clients` SET OrdersNumber = OrdersNumber + 1 WHERE PhoneNumber = {client.PhoneNumber};";
 
-            MySqlCommand command = new MySqlCommand(query, connection);
-            command.CommandTimeout = 60;
+            try
+            {
+                MySqlCommand command = new MySqlCommand(query, connection);
+                command.CommandTimeout = 60;
 
-            command.ExecuteNonQuery();
+                command.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                List<ClientModel> currentClientsList = GetAllClientsData();
+                foreach (ClientModel curClient in currentClientsList)
+                {
+                    if (curClient.PhoneNumber == client.PhoneNumber)
+                    {
+                        curClient.OrdersNumber += 1;
+                        break;
+                    }
+                }
+                serializer.Serialize(currentClientsList);
+            }
         }
 
         private void OpenConnection()
         {
-            connection = new MySqlConnection("server=localhost;port=3306;database=DryCleaners;user=root;password=;");
-            connection.Open();
+            try
+            {
+                connection = new MySqlConnection("server=localhost;port=3306;database=DryCleaners;user=root;password=;");
+                connection.Open();
+            }
+            catch (Exception ex)
+            {
+                return;
+            }
         }
 
         /// <summary>
@@ -290,10 +406,19 @@ namespace Dry_cleaning_program.Controllers
         {
             string query = $"DELETE FROM `Clients` WHERE PhoneNumber = {client.PhoneNumber};";
 
-            MySqlCommand command = new MySqlCommand(query, connection);
-            command.CommandTimeout = 60;
+            try
+            {
+                MySqlCommand command = new MySqlCommand(query, connection);
+                command.CommandTimeout = 60;
 
-            command.ExecuteNonQuery();
+                command.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                List<ClientModel> currentClientsList = GetAllClientsData();
+                currentClientsList.Remove(client);
+                serializer.Serialize(currentClientsList);
+            }
         }
 
         /// <summary>
@@ -304,10 +429,19 @@ namespace Dry_cleaning_program.Controllers
         {
             string query = $"DELETE FROM `Orders` WHERE Id = {order.Id};";
 
-            MySqlCommand command = new MySqlCommand(query, connection);
-            command.CommandTimeout = 60;
+            try
+            {
+                MySqlCommand command = new MySqlCommand(query, connection);
+                command.CommandTimeout = 60;
 
-            command.ExecuteNonQuery();
+                command.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                List<OrderModel> currentOrdersList = GetAllOrdersData();
+                currentOrdersList.Remove(order);
+                serializer.Serialize(currentOrdersList);
+            }
         }
 
         /// <summary>
@@ -318,10 +452,19 @@ namespace Dry_cleaning_program.Controllers
         {
             string query = $"DELETE FROM `Services` WHERE ServiceName = {service.ServiceName};";
 
-            MySqlCommand command = new MySqlCommand(query, connection);
-            command.CommandTimeout = 60;
+            try
+            {
+                MySqlCommand command = new MySqlCommand(query, connection);
+                command.CommandTimeout = 60;
 
-            command.ExecuteNonQuery();
+                command.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                List<ServiceModel> currentServicesList = GetAllServices();
+                currentServicesList.Remove(service);
+                serializer.Serialize(currentServicesList);
+            }
         }
 
 
@@ -336,9 +479,18 @@ namespace Dry_cleaning_program.Controllers
                 $"VALUES('{client.PhoneNumber}', '{client.ClientSurname}', '{client.ClientName}', '{client.ClientPatronymic}', " +
                 $"'{client.BirthDate.Date.ToString("dd/MM/yyyy")}');";
 
-            MySqlCommand command = new MySqlCommand(query, connection);
+            try
+            {
+                MySqlCommand command = new MySqlCommand(query, connection);
 
-            command.ExecuteNonQuery();
+                command.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                List<ClientModel> currentClientsList = GetAllClientsData();
+                currentClientsList.Add(client);
+                serializer.Serialize(currentClientsList);
+            }
         }
 
 
@@ -348,12 +500,22 @@ namespace Dry_cleaning_program.Controllers
         /// <param name="order">сохраняемый заказ</param>
         public void Save(OrderModel order)
         {
-            string query = $"INSERT INTO `Orders` (ClientPhoneNumber, ServiceName, StuffsNumber, ReceptionDate, WithDelivery) VALUES('{order.ClientPhoneNumber}', " +
+            string query = $"INSERT INTO `Orders` (ClientPhoneNumber, ServiceName, StuffsNumber, ReceptionDate, WithDelivery) " +
+                $"VALUES('{order.ClientPhoneNumber}', " +
                 $"'{order.ServiceName}', {order.StuffsNumber}, '{order.ReceptionDate.Date.ToString("dd/MM/yyyy")}', {order.WithDelivery});";
 
-            MySqlCommand command = new MySqlCommand(query, connection);
+            try
+            {
+                MySqlCommand command = new MySqlCommand(query, connection);
 
-            command.ExecuteNonQuery();
+                command.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                List<OrderModel> currentOrdersList = GetAllOrdersData();
+                currentOrdersList.Add(order);
+                serializer.Serialize(currentOrdersList);
+            }
         }
 
 
@@ -367,13 +529,18 @@ namespace Dry_cleaning_program.Controllers
             string query = $"INSERT INTO `Services` (ServiceName, Cost) " +
                 $"VALUES('{service.ServiceName}', {service.Cost});";
 
-            MySqlCommand command = new MySqlCommand(query, connection);
+            try
+            {
+                MySqlCommand command = new MySqlCommand(query, connection);
 
-            command.ExecuteNonQuery();
+                command.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                List<ServiceModel> currentServicesList = GetAllServices();
+                currentServicesList.Add(service);
+                serializer.Serialize(currentServicesList);
+            }
         }
-
-
-
-
     }
 }

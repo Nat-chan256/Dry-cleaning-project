@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Dry_cleaning_program.Models
 {
+    [Serializable]
     /// <summary>
     /// Модель клиента.
     /// </summary>
@@ -34,12 +35,13 @@ namespace Dry_cleaning_program.Models
         /// <summary>
         /// Количество заказов, сделанных клиентом.
         /// </summary>
-        public int OrdersNumber { get; }
+        public int OrdersNumber { get; set; }
 
         /// <summary>
         /// Номер телефона клиента.
         /// </summary>
         public string PhoneNumber { get; }
+
 
         /// <summary>
         /// Конструктор с параметрами.

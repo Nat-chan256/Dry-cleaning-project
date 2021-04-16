@@ -67,5 +67,14 @@ namespace Dry_cleaning_program.Controllers
             DbController.Save(service);
             ServicesCache.Add(service);
         }
+
+        /// <summary>
+        /// Сериализация заказов. Заказы берутся из кэша заказов.
+        /// </summary>
+        public void SerializeServices()
+        {
+            Serializer serializer = Serializer.GetInstnce();
+            serializer.Serialize(ServicesCache);
+        }
     }
 }

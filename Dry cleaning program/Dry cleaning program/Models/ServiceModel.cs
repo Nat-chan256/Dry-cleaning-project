@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Dry_cleaning_program.Models
 {
+    [Serializable]
     /// <summary>
     /// Модель услуги.
     /// </summary>

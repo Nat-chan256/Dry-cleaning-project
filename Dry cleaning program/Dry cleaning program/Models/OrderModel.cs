@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Dry_cleaning_program.Models
 {
+    [Serializable]
     /// <summary>
     /// Класс Модель заказа.
     /// </summary>
@@ -37,9 +38,15 @@ namespace Dry_cleaning_program.Models
         public DateTime ReceptionDate { get; }
 
         /// <summary>
+        /// Дата возврата вещи.
+        /// </summary>
+        public DateTime ReturnDate { get; set; }
+
+        /// <summary>
         /// С доставкой на дом или нет.
         /// </summary>
         public bool WithDelivery { get; }
+
 
 
         /// <summary>
