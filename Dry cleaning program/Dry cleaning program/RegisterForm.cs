@@ -125,6 +125,7 @@ namespace Dry_cleaning_program
             {
                 resultCost += deliveryCost;
             }
+
             tbCost.Text = resultCost.ToString();
         }
 
